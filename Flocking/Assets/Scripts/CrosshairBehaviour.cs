@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using System;
 
+/// <summary>
+/// Render crosshair texture in the centre of the screen.
+/// </summary>
 public class CrosshairBehaviour : MonoBehaviour
-{
-    
+{   
     public Texture2D CrosshairTexture;
     /// <summary>
     /// Preferred size of crosshair as a fraction of screen size.

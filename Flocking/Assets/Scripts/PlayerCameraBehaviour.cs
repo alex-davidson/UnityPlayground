@@ -5,16 +5,18 @@ using System.Collections;
 /// Look around with the mouse.  Move in the XZ plane with WASD.
 /// Camera remains aligned with the XZ plane, ie. 'up' is always along the world's positive Y axis.
 /// </summary>
-public class PlayerCameraBehaviour : MonoBehaviour {
-
+public class PlayerCameraBehaviour : MonoBehaviour
+{
     private Transform viewMatrix;
 
     private const float BaseRotationSensitivity = 70;
     private const float BaseTranslationSensitivity = 30;
-
-	// Use this for initialization
-	void Start () {
+    
+	void Start()
+    {
 	    viewMatrix = this.GetComponent<Transform>();
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
 	}
 	
     public float MotionSensitivity;
@@ -25,8 +27,8 @@ public class PlayerCameraBehaviour : MonoBehaviour {
     
     private float currentYaw;
     
-	// Update is called once per frame
-	void FixedUpdate () {
+	void FixedUpdate()
+    {
 	    var interpolatedYaw = ApplyRotationAndGetInterpolatedYaw();
         ApplyTranslation(interpolatedYaw);
 	}
