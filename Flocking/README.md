@@ -6,7 +6,7 @@ Objective: a flock simulation where the flock members chase and consume food pla
 Progress:
  * Terrain
  * Camera motion in the world XZ axis with 'conventional' mouselook
- * Food placement (WIP)
+ * Food placement
  
 Remaining:
  * Animals
