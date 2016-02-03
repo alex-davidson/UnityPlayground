@@ -24,10 +24,11 @@ public class AnimalBehaviour : MonoBehaviour
 	    var closestConsumable = GetConsumablesInRange().Where(IsVisible).FirstOrDefault();
         if(closestConsumable == null)
         {
-            TryToHalt();
+            selfBody.drag = 1;
         }
         else
         {
+            selfBody.drag = 0;
             ApproachTargetPosition(closestConsumable.transform.position);
         }
 	}

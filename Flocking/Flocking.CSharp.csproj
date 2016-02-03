@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\AnimalBehaviour.cs" />
+    <Compile Include="Assets\Scripts\ConsumerBehaviour.cs" />
     <Compile Include="Assets\Scripts\CrosshairBehaviour.cs" />
     <Compile Include="Assets\Scripts\ExitGameBehaviour.cs" />
     <Compile Include="Assets\Scripts\InitialSpawnBehaviour.cs" />
