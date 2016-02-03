@@ -36,16 +36,15 @@ public class PlayerCameraBehaviour : MonoBehaviour
     private void ApplyTranslation(float interpolatedYaw)
     {
         var delta = Time.deltaTime * BaseTranslationSensitivity * MotionSensitivity;
-        var globalXZAlignedForwardBackwardAxis = Quaternion.Euler(0, interpolatedYaw, 0) * Vector3.forward;
 
-        var leftRight = Input.GetAxis("Horizontal") * delta;
-        var forwardBackward = Input.GetAxis("Vertical") * delta;
+        var leftRight = Input.GetAxis("Horizontal");
+        var forwardBackward = Input.GetAxis("Vertical");
         
-        var localLeftRight = new Vector3(leftRight, 0);
-        var globalForwardBackward =  globalXZAlignedForwardBackwardAxis * forwardBackward;
+        var localTranslationInGlobalXZPlane = new Vector3(leftRight, 0, forwardBackward) * delta;
 
-        viewMatrix.Translate(localLeftRight, Space.Self); 
-        viewMatrix.Translate(globalForwardBackward, Space.World); 
+        var globalTranslationInXZPlane = Quaternion.Euler(0, interpolatedYaw, 0) * localTranslationInGlobalXZPlane;
+        
+        viewMatrix.Translate(globalTranslationInXZPlane, Space.World); 
     }
 
     private float ApplyRotationAndGetInterpolatedYaw()
