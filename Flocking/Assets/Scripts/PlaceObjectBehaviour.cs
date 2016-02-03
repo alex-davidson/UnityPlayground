@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Assets.Scripts;
 
 public class PlaceObjectBehaviour : MonoBehaviour
 {
@@ -11,24 +12,7 @@ public class PlaceObjectBehaviour : MonoBehaviour
     {
         selfTransform = GetComponent<Transform>();
 
-        rayRadius = GetPrefabRadius(Prefab);
-    }
-
-    private static float GetPrefabRadius(GameObject prefab)
-    {
-        // Can apparently only get the prefab's bounds if we instantiate it:
-        var actual = (GameObject) Instantiate(prefab, Vector3.zero, Quaternion.identity);
-        var radius = GetObjectRadius(actual);
-        Destroy(actual);
-        return radius;
-    }
-
-    private static float GetObjectRadius(GameObject prefab)
-    {
-        if(prefab == null) return 0;
-        
-        var bounds = prefab.GetComponent<Collider>().bounds;
-        return bounds.extents.magnitude;
+        rayRadius = Utils.MeasurePrefabRadius(Prefab);
     }
 
     void Update()
