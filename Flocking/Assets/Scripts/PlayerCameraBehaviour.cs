@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections;
 
 /// <summary>
@@ -40,9 +41,12 @@ public class PlayerCameraBehaviour : MonoBehaviour
         var leftRight = Input.GetAxis("Horizontal");
         var forwardBackward = Input.GetAxis("Vertical");
         
-        var localTranslationInGlobalXZPlane = new Vector3(leftRight, 0, forwardBackward) * delta;
+        var localTranslationInGlobalXZPlane = new Vector3(leftRight, 0, forwardBackward);
 
-        var globalTranslationInXZPlane = Quaternion.Euler(0, interpolatedYaw, 0) * localTranslationInGlobalXZPlane;
+        // To prevent double-chording, clamp translation magnitude to an upper limit.
+        var clampedLocalTranslationInGlobalXZPlane = localTranslationInGlobalXZPlane / Math.Max(1, localTranslationInGlobalXZPlane.magnitude);
+
+        var globalTranslationInXZPlane = Quaternion.Euler(0, interpolatedYaw, 0) * clampedLocalTranslationInGlobalXZPlane * delta;
         
         viewMatrix.Translate(globalTranslationInXZPlane, Space.World); 
     }
