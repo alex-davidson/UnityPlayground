@@ -28,7 +28,7 @@ public class PlayerCameraBehaviour : MonoBehaviour
     
     private float currentYaw;
     
-	void FixedUpdate()
+	void Update()
     {
 	    var interpolatedYaw = ApplyRotationAndGetInterpolatedYaw();
         ApplyTranslation(interpolatedYaw);
