@@ -13,14 +13,26 @@ public class AnimalBehaviour : MonoBehaviour
     public float HuntingVisionRadius;
     public float HuntingVisionAngleDegrees = 40;
     public float HuntingTargetSwitchChance = 0.4f;
-    public float HuntingAwarenessSeconds = 0.8f;
+    public float HuntingAwarenessSeconds = 0.8f; // Frequency of 'target' updates, ie. which consumable to chase.
+
     private float nextHuntingUpdate = 0;
+    private Collider currentConsumable;
+
+    public float SocialVisionRadius;
+    public float SocialAwarenessSeconds = 0.8f; // Frequency of 'cluster' updates, ie. which peers are considered to be representative of the flock.
+    public int SocialGroupPopulation = 6;
+    public float SocialGroupRadius = 20;
+
+    private Collider[] currentSocialGroup;
+    private Collider[] closestSocialCandidates;
+    private float nextSocialUpdate = 0;
+    
+    private const float Float_Delta = 0.0001f;
+
 
     private Transform selfTransform;
     private Rigidbody selfBody;
-
-    private Collider currentConsumable;
-
+    
 
     void Start ()
     {
@@ -28,37 +40,89 @@ public class AnimalBehaviour : MonoBehaviour
         selfBody = GetComponent<Rigidbody>();
         nextHuntingUpdate = Time.time;
 	}
-	
-    void FixedUpdate ()
-    {
-        // My default behaviour is to gently come to a halt.
-        selfBody.drag = 1;
 
-        if(Time.fixedTime >= nextHuntingUpdate)
+    void FixedUpdate()
+    {
+        // Update my incentives:
+        //  * the food I'm chasing,
+        //  * the members of my flock,
+        //  * any flocks nearby I might join.
+
+        if (Time.fixedTime >= nextHuntingUpdate)
         {
             UpdateHunting();
             nextHuntingUpdate += HuntingAwarenessSeconds;
         }
-        
-        if(currentConsumable != null)
+        if (Time.fixedTime >= nextSocialUpdate)
         {
-            ApproachTargetPosition(currentConsumable.transform.position);
+            UpdateSocial();
+            nextSocialUpdate += SocialAwarenessSeconds;
         }
-	}
+
+
+        // Sum my drives towards each incentive.
+        // These are weighted vectors of arbitrary magnitude.
+
+        Vector3 drive = Vector3.zero;
+        if (currentConsumable != null)
+        {
+            drive += GetDriveToApproachPosition(currentConsumable.transform.position);
+        }
+
+
+
+        // Convert drive into action.
+
+        if (drive.magnitude < Float_Delta)
+        {
+            // My default behaviour is to gently come to a halt.
+            selfBody.drag = 1;
+        }
+        else
+        {
+            selfBody.drag = 0;
+            ApplyDrive(drive);
+        }
+    }
+
+    private Vector3 GetDriveToApproachPosition(Vector3 position)
+    {
+        var translation = position - selfBody.position;
+        return translation / MaximumSpeed;
+    }
+
+    private void ApplyDrive(Vector3 drive)
+    {
+        var drag = MaximumAcceleration / MaximumSpeed;
+
+        // Cap acceleration magnitude.
+        var acceleration = MaximumAcceleration * drive / Math.Max(1, drive.magnitude);
+
+        var force = acceleration - (selfBody.velocity * drag);
+
+        selfBody.AddForce(force * Time.fixedDeltaTime);
+    }
+
+    private bool IsVisible(Collider target)
+    {
+        return selfTransform.position.CanSee(target);
+    }
+
+    #region Hunting
 
     private void UpdateHunting()
     {
         if (currentConsumable == null)
         {
             // If I have no current consumable target, find the closest one in range.
-            currentConsumable = GetClosestConsumable();
+            currentConsumable = GetClosestConsumableInVisionRange();
             return;
         }
         var targetSwitchAttempt = Random.value;
         if(targetSwitchAttempt < HuntingTargetSwitchChance)
         {
             // If there's a closer consumable than my current target, maybe switch to it.
-            var closestConsumable = GetClosestConsumable();
+            var closestConsumable = GetClosestConsumableInVisionRange();
             if(closestConsumable == null || closestConsumable == currentConsumable) return;
             var bias = Utils.GetVisionCentrednessBias(selfBody.position, selfBody.velocity, closestConsumable.transform.position, HuntingVisionAngleDegrees);
             if(targetSwitchAttempt < bias * HuntingTargetSwitchChance)
@@ -69,39 +133,32 @@ public class AnimalBehaviour : MonoBehaviour
         }
     }
     
-    private Collider GetClosestConsumable()
+    private Collider GetClosestConsumableInVisionRange()
     {
-        return GetConsumablesInRange().Where(IsVisible).FirstOrDefault();
+        return selfTransform.position.GetTaggedObjectsInRange("Consumable", HuntingVisionRadius)
+            .OrderByDistanceFrom(selfTransform.position)
+            .Where(IsVisible)
+            .FirstOrDefault();
+    }
+
+    #endregion
+
+    #region Flocking
+
+    private void UpdateSocial()
+    {
+        closestSocialCandidates = GetPeersInVisionRange().Take(SocialGroupPopulation).ToArray();
+        currentSocialGroup = closestSocialCandidates
+            .Where(s => Vector3.Distance(selfTransform.position, s.transform.position) <= SocialGroupRadius)
+            .ToArray();
+    }
+
+    private IEnumerable<Collider> GetPeersInVisionRange()
+    {
+        return selfTransform.position.GetTaggedObjectsInRange("Consumer", SocialVisionRadius)
+            .OrderByDistanceFrom(selfTransform.position)
+            .Where(IsVisible);
     }
     
-    private void ApproachTargetPosition(Vector3 position)
-    {
-        var drag = MaximumAcceleration / MaximumSpeed;
-        
-        var translation = position - selfBody.position;
-        var drive = translation / MaximumSpeed;
-
-        // Cap acceleration magnitude.
-        var acceleration = MaximumAcceleration * drive / Math.Max(1, drive.magnitude);
-
-        var force = acceleration - (selfBody.velocity * drag);
-
-        selfBody.AddForce(force * Time.fixedDeltaTime);
-        selfBody.drag = 0;
-    }
-    
-    private bool IsVisible(Collider target)
-    {
-        return selfTransform.position.CanSee(target);
-    }
-
-    /// <summary>
-    /// Find 'Consumable' objects in hunting vision range, ordered closest to farthest.
-    /// </summary>
-    private IEnumerable<Collider> GetConsumablesInRange()
-    {
-	    var colliders = Physics.OverlapSphere(this.selfTransform.position, HuntingVisionRadius);
-        return colliders.Where(c => c.CompareTag("Consumable"))
-            .OrderBy(c => Vector3.Distance(selfTransform.position, c.transform.position));
-    }
+    #endregion
 }

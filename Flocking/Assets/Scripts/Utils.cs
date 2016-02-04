@@ -63,5 +63,15 @@ namespace Assets.Scripts
             Physics.Linecast(selfEyes, target.transform.position, out hit);
             return hit.collider == target;
         }
+
+        public static IEnumerable<Collider> OrderByDistanceFrom(this IEnumerable<Collider> colliders, Vector3 centrePosition)
+        {
+             return colliders.OrderBy(c => Vector3.Distance(centrePosition, c.transform.position));
+        }
+
+        public static IEnumerable<Collider> GetTaggedObjectsInRange(this Vector3 centrePosition, string tag, float range)
+        {
+            return Physics.OverlapSphere(centrePosition, range).Where(c => c.CompareTag(tag));
+        }
     }
 }
