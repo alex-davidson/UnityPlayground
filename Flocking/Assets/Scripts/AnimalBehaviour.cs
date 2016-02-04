@@ -19,16 +19,14 @@ public class AnimalBehaviour : MonoBehaviour
     private Collider currentConsumable;
 
     public float SocialVisionRadius;
-    public float SocialAwarenessSeconds = 0.8f; // Frequency of 'cluster' updates, ie. which peers are considered to be representative of the flock.
+    public float SocialAwarenessSeconds = 0.4f; // Frequency of 'cluster' updates, ie. which peers are considered to be representative of the flock.
     public int SocialGroupPopulation = 6;
-    public float SocialGroupRadius = 20;
-
+    public float SocialGroupRadius = 16;
+    public float PersonalSpace = 4;
+    
     private Collider[] currentSocialGroup;
     private Collider[] closestSocialCandidates;
     private float nextSocialUpdate = 0;
-    
-    private const float Float_Delta = 0.0001f;
-
 
     private Transform selfTransform;
     private Rigidbody selfBody;
@@ -68,12 +66,21 @@ public class AnimalBehaviour : MonoBehaviour
         {
             drive += GetDriveToApproachPosition(currentConsumable.transform.position);
         }
-
+        if(currentSocialGroup.Length > 0)
+        {
+            // Flock.
+            drive += GetDriveToMaintainPersonalSpaceInFlock(currentSocialGroup);
+        }
+        else if(closestSocialCandidates.Length > 0)
+        {
+            // Approach potential flocks.
+            drive += GetDriveToApproachFlockCandidates(closestSocialCandidates);
+        }
 
 
         // Convert drive into action.
 
-        if (drive.magnitude < Float_Delta)
+        if (drive.magnitude < Utils.Float_Delta)
         {
             // My default behaviour is to gently come to a halt.
             selfBody.drag = 1;
@@ -90,7 +97,7 @@ public class AnimalBehaviour : MonoBehaviour
         var translation = position - selfBody.position;
         return translation / MaximumSpeed;
     }
-
+    
     private void ApplyDrive(Vector3 drive)
     {
         var drag = MaximumAcceleration / MaximumSpeed;
@@ -160,5 +167,37 @@ public class AnimalBehaviour : MonoBehaviour
             .Where(IsVisible);
     }
     
+    private Vector3 GetDriveToApproachFlockCandidates(Collider[] candidates)
+    {
+        var total = Vector3.zero;
+        foreach (var candidate in candidates)
+        {
+            var difference = candidate.transform.position - selfTransform.position;
+            var distance = difference.magnitude - PersonalSpace;
+            if(distance <= 0) continue;
+
+            var attraction = distance / (SocialVisionRadius - PersonalSpace);
+            attraction = Mathf.Sqrt(attraction);
+            total += attraction * difference.normalized;
+        }
+        return total;
+    }
+
+    private Vector3 GetDriveToMaintainPersonalSpaceInFlock(Collider[] peers)
+    {
+        var total = Vector3.zero;
+        foreach (var peer in peers)
+        {
+            var inverseDifference = selfTransform.position - peer.transform.position;
+            var invasionDistance = PersonalSpace - inverseDifference.magnitude;
+            if(invasionDistance <= 0) continue;
+
+            var repulsion = invasionDistance / PersonalSpace;
+            repulsion = repulsion * repulsion * 3;
+            total += repulsion * inverseDifference.normalized;
+        }
+        return total;
+    }
+
     #endregion
 }

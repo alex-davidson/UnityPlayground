@@ -9,6 +9,11 @@ namespace Assets.Scripts
 {
     public static class Utils
     {
+        /// <summary>
+        /// A value small enough to be zero in most physics-related circumstances.
+        /// </summary>
+        public const float Float_Delta = 0.001f;
+
         public static float MeasurePrefabRadius(GameObject prefab)
         {
             if (prefab == null) return 0;
@@ -37,7 +42,7 @@ namespace Assets.Scripts
         /// </summary>
         public static float GetVisionCentrednessBias(Vector3 selfPosition, Vector3 selfDirection, Vector3 targetPosition, float visionAngleDegrees)
         {
-            if(selfDirection.magnitude < 0.0001f) return 1;
+            if(selfDirection.magnitude < Float_Delta) return 1;
 
             // 1 = Directly in front.
             var bias = Vector3.Dot(selfDirection.normalized,

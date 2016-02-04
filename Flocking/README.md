@@ -9,9 +9,9 @@ Progress:
  * Food placement
  * Animals
  * Animals chasing food
+ * Animals maintaining distance from each other
+ * Flocking (partial)
  
 Remaining:
- * Animals maintaining distance from each other
- * Flocking
  * Strength of flocking 'instinct' based on when they were last fed
  
