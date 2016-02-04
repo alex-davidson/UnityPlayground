@@ -142,10 +142,16 @@ publish/
 *.pubxml
 *.publishproj
 
+#
+# I do not agree with the use of Package Restore to bring in remote dependencies
+# at build time. All dependencies should be present within the source tree or as
+# part of a minimal build environment. Therefore I always include NuGet packages
+# as part of my source tree even though they may be large binaries.
+#
 # NuGet Packages
-*.nupkg
+# *.nupkg
 # The packages folder can be ignored because of Package Restore
-**/packages/*
+# **/packages/*
 # except build/, which is used as an MSBuild target.
 !**/packages/build/
 # Uncomment if necessary however generally it will be regenerated when needed
